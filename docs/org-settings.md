@@ -56,6 +56,33 @@ gh api orgs/fld-forge/actions/permissions/workflow -X PUT --input - <<'EOF'
 EOF
 ```
 
+## Actions: artifact and log retention
+
+The organization default is **30 days**, lowered from GitHub's default of 90.
+
+The organization value is a **cap**, not a suggestion: once it is set to 30, a
+repository can choose less but never more (`maximum_allowed_days` on every
+repository drops to 30 to match). Thirty was chosen because the workflows in
+the fleet already declare `retention-days: 30` on the artifacts they upload, so
+the organization default and the workflow intent become the same number instead
+of one silently overriding the other. It also shortens the window in which
+build logs, which can incidentally contain more than intended, are retained.
+
+The trade-off accepted: a supply-chain problem discovered more than 30 days
+after the fact loses its workflow-log forensic trail. The other forensic
+sources are unaffected because they do not expire with logs, namely immutable
+releases with their SLSA attestations, signed commits, and code scanning and
+Dependabot alert history. Raising the value again is a single `PUT`.
+
+```bash
+gh api orgs/fld-forge/actions/permissions/artifact-and-log-retention \
+  -X PUT -F days=30
+
+# Verify, at organization scope and then as seen by a repository
+gh api orgs/fld-forge/actions/permissions/artifact-and-log-retention
+gh api repos/fld-forge/<repo>/actions/permissions/artifact-and-log-retention
+```
+
 ## Security configuration: fld-forge-baseline (id 267493)
 
 Enforced (`enforcement: enforced`), and the default for **all** new
@@ -132,6 +159,126 @@ gh api orgs/fld-forge/code-security/configurations/<id>/attach \
 
 Not applied yet. The definitions live in [`rulesets/`](../rulesets/) with the
 apply procedure and the ordering constraint on `required_signatures`.
+
+## Two-factor authentication
+
+**Not enforced yet, and it cannot be enforced from the REST API.**
+
+`two_factor_requirement_enabled` is returned by `GET /orgs/fld-forge` but is
+**read only**: a `PATCH` that sets it returns `HTTP 200 OK` with the field
+echoed back unchanged. There is no error to react to, so an automated run that
+trusts the exit code alone will report success while nothing happened. It has
+to be set in the web interface:
+
+> Organization settings -> Authentication security ->
+> "Require two-factor authentication for everyone in the fld-forge organization"
+
+### Verify before turning it on
+
+Enabling organization 2FA **removes** every member who does not have 2FA on
+their personal account, and it does not spare the owner. With a single member
+that member is the owner, so the check below is the difference between a
+hardening step and losing access to the organization:
+
+```bash
+# The set of members who would be removed. Must be 0.
+gh api 'orgs/fld-forge/members?filter=2fa_disabled' --jq '. | length'
+
+# Sanity check that the filter is discriminating rather than empty:
+# this must be larger than the count above.
+gh api 'orgs/fld-forge/members?filter=all' --jq '. | length'
+```
+
+Verified 2026-08-18: `filter=all` returns 1, `filter=2fa_disabled` returns 0.
+The sole member already has 2FA, so enabling the requirement removes nobody.
+
+Note that `GET /user --jq .two_factor_authentication` is **not** a usable
+substitute: it returns `null` unless the token carries the `user` scope, and a
+`null` there says nothing about whether 2FA is on.
+
+## Member privileges
+
+Restrictive values, so that the day a second member is invited they cannot
+create repositories outside the governed baseline. All of it is inert while the
+organization has one member, which is exactly why it is worth setting now
+rather than remembering later.
+
+| Setting | Value | Settable by API |
+| --- | --- | --- |
+| `members_can_create_repositories` | `false` | yes |
+| `members_can_create_public_repositories` | `false` | yes (cascades from the line above) |
+| `members_can_create_private_repositories` | `false` | yes (cascades from the line above) |
+| `members_can_create_teams` | `false` | yes |
+| `default_repository_permission` | `read` | yes (already correct) |
+| `members_can_fork_private_repositories` | `false` | yes (already correct) |
+| `members_can_delete_issues` | `false` | yes (already correct) |
+| `deploy_keys_enabled_for_repositories` | `false` | yes (already correct) |
+| `members_can_delete_repositories` | `true` | **no, web UI only** |
+| `members_can_change_repo_visibility` | `true` | **no, web UI only** |
+| `members_can_invite_outside_collaborators` | `true` | **no, web UI only** |
+
+Organization **owners are exempt** from `members_can_create_repositories`, so
+turning it off does not stop the owner from creating repositories. It applies
+to the `member` role only.
+
+The last three rows behave exactly like `two_factor_requirement_enabled`: the
+`PATCH` returns `HTTP 200 OK` and echoes the old value back. They are part of
+the same web-only group and are listed with 2FA in the manual checklist below.
+
+```bash
+gh api orgs/fld-forge -X PATCH \
+  -F members_can_create_repositories=false \
+  -F members_can_create_public_repositories=false \
+  -F members_can_create_private_repositories=false \
+  -F members_can_create_teams=false \
+  -F members_can_fork_private_repositories=false \
+  -f default_repository_permission=read
+
+# Always read back: this endpoint ignores read-only fields without complaining.
+gh api orgs/fld-forge --jq '{members_can_create_repositories,
+  members_can_create_public_repositories, members_can_create_private_repositories,
+  members_can_create_teams, members_can_delete_repositories,
+  members_can_change_repo_visibility, members_can_invite_outside_collaborators,
+  default_repository_permission, members_can_fork_private_repositories}'
+```
+
+## Web commit sign-off
+
+`web_commit_signoff_required` is `true`: a commit authored through the GitHub
+web interface must carry a `Signed-off-by` trailer.
+
+It affects browser-made commits only. Commits pushed from a clone are unaffected
+because they are already signed with SSH, and it does not interact with the
+`required_signatures` ruleset rule, which checks a cryptographic signature
+rather than a trailer. The point is that the occasional edit made in the browser
+is explicit rather than anonymous.
+
+```bash
+gh api orgs/fld-forge -X PATCH -F web_commit_signoff_required=true
+gh api orgs/fld-forge --jq '{web_commit_signoff_required}'
+```
+
+## Manual checklist: settings the API cannot write
+
+Four organization settings are read only over REST and silently ignore a
+`PATCH`. They must be set in the web interface, and an automated audit cannot
+fix them, only report them.
+
+| Setting | Current | Wanted | Where |
+| --- | --- | --- | --- |
+| `two_factor_requirement_enabled` | `false` | `true` | Settings -> Authentication security |
+| `members_can_delete_repositories` | `true` | `false` | Settings -> Member privileges -> Repository deletion and transfer |
+| `members_can_change_repo_visibility` | `true` | `false` | Settings -> Member privileges -> Repository visibility change |
+| `members_can_invite_outside_collaborators` | `true` | `false` | Settings -> Member privileges -> Repository invitations |
+
+Re-read them after any web change, because this is the only way to know they
+landed:
+
+```bash
+gh api orgs/fld-forge --jq '{two_factor_requirement_enabled,
+  members_can_delete_repositories, members_can_change_repo_visibility,
+  members_can_invite_outside_collaborators}'
+```
 
 ## Membership and billing
 
