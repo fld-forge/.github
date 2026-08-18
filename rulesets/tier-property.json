@@ -1,0 +1,8 @@
+{
+  "value_type": "single_select",
+  "required": true,
+  "default_value": "sandbox",
+  "description": "Governance tier. 'mature' repos carry the full discipline (pull requests, signed commits) via the org strict ruleset; 'sandbox' repos only get the destruction-prevention floor.",
+  "allowed_values": ["mature", "sandbox"],
+  "values_editable_by": "org_actors"
+}

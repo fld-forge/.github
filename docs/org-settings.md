@@ -102,7 +102,8 @@ features it controls.
 | `secret_scanning_non_provider_patterns` | disabled |
 | `secret_scanning_validity_checks` | disabled |
 
-The last two stay off to mirror the verified pi-config posture.
+The last two stay off: they are the noisier detections, and neither was part of
+the verified reference posture this baseline was frozen from.
 
 ### Plan boundary
 
@@ -124,7 +125,7 @@ buy the add-on.
 # Recreate the configuration
 gh api orgs/fld-forge/code-security/configurations -X POST --input - <<'EOF'
 {"name": "fld-forge-baseline",
- "description": "Baseline security posture for fld-forge repositories, mirroring the verified pi-config reference state (see the governance repository).",
+ "description": "Baseline security posture for fld-forge repositories.",
  "code_security": "enabled", "secret_protection": "enabled",
  "dependency_graph": "enabled", "dependabot_alerts": "enabled",
  "dependabot_security_updates": "enabled", "code_scanning_default_setup": "enabled",
@@ -155,10 +156,54 @@ gh api orgs/fld-forge/code-security/configurations/<id>/attach \
   -X POST -f scope=selected -F 'selected_repository_ids[]=<repo_id>'
 ```
 
+## Custom repository properties
+
+| Property | Type | Values | Default | Editable by |
+| --- | --- | --- | --- | --- |
+| `tier` | single select | `mature`, `sandbox` | `sandbox` | organization actors only |
+
+`tier` selects which repositories the strict ruleset applies to. It is
+`required: true` with a default, so every repository carries a value from the
+moment it exists, and that value is `sandbox` unless someone deliberately
+promotes the repository. `values_editable_by: org_actors` prevents a repository
+administrator from moving their own repository out of the strict tier.
+
+Current assignment: `.github`, `governance` and `pi-config` are all `mature`.
+
+```bash
+# Read the schema and every assignment
+gh api orgs/fld-forge/properties/schema/tier
+gh api orgs/fld-forge/properties/values \
+  --jq '.[] | {repo: .repository_name, props: .properties}'
+
+# Promote a repository into the strict tier
+gh api orgs/fld-forge/properties/values -X PATCH --input - <<'EOF'
+{"repository_names": ["<repo>"],
+ "properties": [{"property_name": "tier", "value": "mature"}]}
+EOF
+```
+
 ## Rulesets
 
-Not applied yet. The definitions live in [`rulesets/`](../rulesets/) with the
-apply procedure and the ordering constraint on `required_signatures`.
+Three organization rulesets are live, all `active`, all with no bypass actors.
+The definitions live in [`rulesets/`](../rulesets/) together with the design
+rationale, the apply procedure and the ordering constraint on
+`required_signatures`.
+
+| Ruleset | Target | Applies to | Rules |
+| --- | --- | --- | --- |
+| `floor-no-destruction` | branch | every repository | `non_fast_forward`, `deletion` |
+| `floor-release-tags` | tag | every repository | `deletion`, `update`, `non_fast_forward` on `refs/tags/v*` |
+| `mature-discipline` | branch | `tier = mature` | `pull_request` (0 approvals), `required_signatures` |
+
+The split is deliberate: the floor prevents irreversible loss everywhere,
+including in repositories that do not exist yet, while the contribution
+discipline is reserved for repositories deliberately promoted to `mature`. A
+new repository therefore starts protected but unencumbered.
+
+Organization and repository rules **aggregate**, most restrictive wins, so the
+repository-level rulesets that already exist on the transferred repositories
+stay in place and cannot weaken anything.
 
 ## Two-factor authentication
 

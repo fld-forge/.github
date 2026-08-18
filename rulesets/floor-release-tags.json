@@ -1,5 +1,5 @@
 {
-  "name": "release-tags",
+  "name": "floor-release-tags",
   "target": "tag",
   "enforcement": "active",
   "conditions": {

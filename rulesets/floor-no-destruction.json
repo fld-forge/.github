@@ -1,0 +1,21 @@
+{
+  "name": "floor-no-destruction",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["~DEFAULT_BRANCH"],
+      "exclude": []
+    },
+    "repository_name": {
+      "include": ["~ALL"],
+      "exclude": [],
+      "protected": false
+    }
+  },
+  "rules": [
+    {"type": "non_fast_forward"},
+    {"type": "deletion"}
+  ],
+  "bypass_actors": []
+}

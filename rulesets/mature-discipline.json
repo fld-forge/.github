@@ -1,5 +1,5 @@
 {
-  "name": "branch-protection",
+  "name": "mature-discipline",
   "target": "branch",
   "enforcement": "active",
   "conditions": {
@@ -7,10 +7,11 @@
       "include": ["~DEFAULT_BRANCH"],
       "exclude": []
     },
-    "repository_name": {
-      "include": ["~ALL"],
-      "exclude": [],
-      "protected": false
+    "repository_property": {
+      "include": [
+        {"name": "tier", "property_values": ["mature"]}
+      ],
+      "exclude": []
     }
   },
   "rules": [
@@ -24,8 +25,6 @@
         "required_review_thread_resolution": false
       }
     },
-    {"type": "non_fast_forward"},
-    {"type": "deletion"},
     {"type": "required_signatures"}
   ],
   "bypass_actors": []
