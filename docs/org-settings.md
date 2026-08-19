@@ -5,7 +5,9 @@ organization ever has to be rebuilt, re-apply them with the commands below.
 
 > Maintained by hand: organization state is not reachable from a test suite.
 > Every value below was verified with a `GET` immediately after it was written.
-> Last verified: 2026-08-18.
+> Last verified: 2026-08-18. (2026-08-19: the `mature-discipline` definition
+> in `rulesets/` gained squash-only merges ahead of the live ruleset — see the
+> pending-application note in the Rulesets section.)
 
 ## Actions: allowed actions and SHA pinning
 
@@ -204,6 +206,31 @@ new repository therefore starts protected but unencumbered.
 Organization and repository rules **aggregate**, most restrictive wins, so the
 repository-level rulesets that already exist on the transferred repositories
 stay in place and cannot weaken anything.
+
+### Pending application (defined, not yet live)
+
+The versioned `mature-discipline` definition now pins
+`allowed_merge_methods: ["squash"]` on the `pull_request` rule: rebase merges
+rewrite commits without re-signing them (which `required_signatures` then
+rejects) and merge commits would bring unsigned branch commits into the
+default branch. The **live** organization ruleset does not carry this
+parameter yet.
+
+Required status checks follow the same staging, but **per repository, never
+org-wide**: `fld-forge/.github` has no CI, so an org-wide checks rule would
+block every merge here forever. The per-repo definitions (the five contexts
+`quality`, `pip-audit`, `secrets-scan`, `zizmor`, `CodeQL`) live in the
+`ruleset-main-protection` control of
+[`fld-forge/governance`](https://github.com/fld-forge/governance)
+(`src/governance_tools/baseline.json`, ADR-0009), with a per-target override
+that keeps this repository's ruleset checks-free.
+
+Both go live in one wave ("phase 2") only after `RELEASE_PLEASE_TOKEN`
+(a fine-grained PAT, Contents + Pull requests read/write) exists in the
+repositories with release automation: release PRs pushed with the default
+workflow token trigger no CI, so applying required checks before the token
+would deadlock every release PR. Application is `bootstrap --apply` from the
+governance baseline, followed by a fleet audit run proving convergence.
 
 ## Two-factor authentication
 
