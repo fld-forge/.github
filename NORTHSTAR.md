@@ -1,0 +1,35 @@
+# NORTHSTAR - .github
+
+Steering KPIs for this repository (organization profile, shared defaults and
+versioned governance policy for **fld-forge**). One North Star KPI per axis.
+Every value is measured; an unmeasured value is written as unmeasured, never
+invented. Updated whenever a measurement changes category.
+
+## Speed
+
+| KPI | Current | Target | Measurement |
+| --- | --- | --- | --- |
+| Validation CI duration | not yet measured | < 1 min | Duration of the `validation` job on the latest `main` run |
+
+## Security
+
+| KPI | Current | Target | Measurement |
+| --- | --- | --- | --- |
+| Rulesets active without bypass | 3 of 3 | 100% | The `validation` job fails unless every ruleset has `enforcement: active` and `bypass_actors: []` |
+
+## Maintainability
+
+| KPI | Current | Target | Measurement |
+| --- | --- | --- | --- |
+| Age of the org-settings inventory | 1 day | < 90 days since last verification | The `Last verified` date at the top of `docs/org-settings.md` against today |
+
+## Scalability
+
+| KPI | Current | Target | Measurement |
+| --- | --- | --- | --- |
+| Undocumented manual steps to onboard a repository | 0 known | 0 | Every organization-level step needed by a new repository has its exact command in `docs/org-settings.md` or the [governance](https://github.com/fld-forge/governance) baseline |
+
+Measurement cadence: the `validation` job runs on every push and pull request
+to `main`. The dated inventory in `docs/org-settings.md` is refreshed whenever
+an organization setting changes, and its age is reviewed when this file is
+touched.

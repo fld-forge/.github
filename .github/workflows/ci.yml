@@ -1,0 +1,141 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate rulesets and documentation coherence
+        # This is a gate, not a report: any violation exits 1 and fails the job.
+        run: |
+          python3 - <<'EOF'
+          import json
+          import sys
+          from pathlib import Path
+
+          errors = []
+
+          RULESET_FILES = {
+              "floor-no-destruction.json",
+              "floor-release-tags.json",
+              "mature-discipline.json",
+          }
+          PROPERTY_FILE = "tier-property.json"
+          EXPECTED = RULESET_FILES | {PROPERTY_FILE}
+
+          rulesets_dir = Path("rulesets")
+          actual = {p.name for p in rulesets_dir.glob("*.json")}
+          if actual != EXPECTED:
+              missing = sorted(EXPECTED - actual)
+              extra = sorted(actual - EXPECTED)
+              errors.append(
+                  f"rulesets/*.json must be exactly {sorted(EXPECTED)}; "
+                  f"missing={missing} extra={extra}"
+              )
+
+          docs = {}
+          for name in sorted(actual & EXPECTED):
+              path = rulesets_dir / name
+              try:
+                  docs[name] = json.loads(path.read_text(encoding="utf-8"))
+              except json.JSONDecodeError as exc:
+                  errors.append(f"{path.as_posix()}: invalid JSON: {exc}")
+
+          parsed_rulesets = sorted(RULESET_FILES & set(docs))
+          names = [docs[f].get("name") for f in parsed_rulesets]
+          if len(names) != len(set(names)):
+              errors.append(f"ruleset 'name' fields are not unique: {names}")
+          for fname, name in zip(parsed_rulesets, names):
+              if name != fname.removesuffix(".json"):
+                  errors.append(
+                      f"rulesets/{fname}: 'name' must match the file name, got {name!r}"
+                  )
+
+          for fname in parsed_rulesets:
+              doc = docs[fname]
+              if doc.get("enforcement") != "active":
+                  errors.append(
+                      f"rulesets/{fname}: enforcement must be 'active', "
+                      f"got {doc.get('enforcement')!r}"
+                  )
+              if doc.get("bypass_actors") != []:
+                  errors.append(
+                      f"rulesets/{fname}: bypass_actors must be [], "
+                      f"got {doc.get('bypass_actors')!r}"
+                  )
+
+          mature = docs.get("mature-discipline.json")
+          if mature is not None:
+              pr_rules = [
+                  r for r in mature.get("rules", []) if r.get("type") == "pull_request"
+              ]
+              if len(pr_rules) != 1:
+                  errors.append(
+                      "rulesets/mature-discipline.json: expected exactly one "
+                      "pull_request rule"
+                  )
+              else:
+                  allowed = pr_rules[0].get("parameters", {}).get("allowed_merge_methods")
+                  if allowed != ["squash"]:
+                      errors.append(
+                          "rulesets/mature-discipline.json: allowed_merge_methods "
+                          f"must be ['squash'], got {allowed!r}"
+                      )
+
+          tier = docs.get(PROPERTY_FILE)
+          if tier is not None:
+              if tier.get("required") is not True:
+                  errors.append("rulesets/tier-property.json: required must be true")
+              if tier.get("allowed_values") != ["mature", "sandbox"]:
+                  errors.append(
+                      "rulesets/tier-property.json: allowed_values must be "
+                      f"['mature', 'sandbox'], got {tier.get('allowed_values')!r}"
+                  )
+
+          readme = Path("rulesets/README.md").read_text(encoding="utf-8")
+          for fname in sorted(EXPECTED):
+              if fname not in readme:
+                  errors.append(f"rulesets/README.md: no mention of {fname}")
+
+          settings = Path("docs/org-settings.md").read_text(encoding="utf-8")
+          for obj in [n for n in names if n] + ["`tier`"]:
+              if obj not in settings:
+                  errors.append(f"docs/org-settings.md: no mention of {obj}")
+
+          STALE_OWNER = "FrancoisLDaigneault/governance"
+          for path in sorted(Path(".").rglob("*.md")):
+              if ".git" in path.parts:
+                  continue
+              if STALE_OWNER in path.read_text(encoding="utf-8"):
+                  errors.append(
+                      f"{path.as_posix()}: stale owner link {STALE_OWNER}; "
+                      "use fld-forge/governance"
+                  )
+
+          if errors:
+              print("Validation failed:")
+              for err in errors:
+                  print(f"  - {err}")
+              sys.exit(1)
+
+          print(
+              f"Validation passed: {len(EXPECTED)} JSON files, invariants and "
+              "documentation coherence OK."
+          )
+          EOF

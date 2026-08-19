@@ -48,7 +48,7 @@ any repository to enable it, and release automation running with `GITHUB_TOKEN`
 would fail with "GitHub Actions is not permitted to create or approve pull
 requests". The permissive value at the organization level is what allows each
 repository to decide; the per repository desired state is governed separately
-by the [governance](https://github.com/FrancoisLDaigneault/governance) baseline,
+by the [governance](https://github.com/fld-forge/governance) baseline,
 which deliberately preserves the live per repository value instead of forcing
 it.
 
