@@ -1,5 +1,7 @@
 # .github
 
+[![CI](https://img.shields.io/github/actions/workflow/status/fld-forge/.github/ci.yml?branch=main&logo=githubactions&logoColor=white&label=CI)](https://github.com/fld-forge/.github/actions/workflows/ci.yml)
+
 The official settings repository for the **fld-forge** organization. It has two
 distinct roles.
 
@@ -35,4 +37,4 @@ being an untracked click in a settings page.
 
 The per-repository desired state and the tooling that audits the fleet against
 it live in a separate repository:
-[governance](https://github.com/FrancoisLDaigneault/governance).
+[governance](https://github.com/fld-forge/governance).
