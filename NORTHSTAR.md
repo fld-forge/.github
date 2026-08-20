@@ -17,6 +17,10 @@ invented. Updated whenever a measurement changes category.
 | --- | --- | --- | --- |
 | Rulesets active without bypass | 3 of 3 | 100% | The `validation` job fails unless every ruleset has `enforcement: active` and `bypass_actors: []` |
 
+Supporting indicator: OpenSSF Scorecard reporting is not yet measured; the
+target is a successful published scan every week, measured by the latest
+`OpenSSF Scorecard` workflow run and the public `api.scorecard.dev` badge.
+
 ## Maintainability
 
 | KPI | Current | Target | Measurement |
