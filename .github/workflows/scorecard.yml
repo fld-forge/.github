@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
+      contents: read  # checkout and repository analysis
       security-events: write  # upload-sarif to code scanning
       id-token: write  # OIDC token so publish_results can attest the run
     steps:
