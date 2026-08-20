@@ -217,9 +217,12 @@ live in the `ruleset-main-protection` control of
 (`src/governance_tools/baseline.json`, ADR-0009). Required checks remain
 **per repository, never org-wide**.
 
-`fld-forge/.github` has CI but does not produce the complete Python profile,
-so its checks-free override remains explicit. Requiring any missing profile
-context here would block every merge.
+As of the last live verification, `fld-forge/.github` still has its explicit
+checks-free override. Its approved desired state is strict status checks for
+exactly `CodeQL` and `validation`, the contexts this repository actually
+produces. Applying that state remains pending a governance baseline update and
+a separately reviewed live ruleset change; no Python-only context will be
+required here because that would block every merge.
 
 This live C1 enforcement is independent of the organization
 `mature-discipline` ruleset. Its versioned definition pins
