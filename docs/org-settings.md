@@ -217,11 +217,11 @@ default branch. The **live** organization ruleset does not carry this
 parameter yet.
 
 Required status checks follow the same staging, but **per repository, never
-org-wide**. `fld-forge/.github` now has CI and produces only the `validation`
-context; it remains exempt from the Python-project check set because it does
-not produce those contexts. Requiring them here would block every merge. The
-per-repo definitions (the five contexts `quality`, `uv-audit`, `secrets-scan`,
-`zizmor`, `CodeQL`) live in the `ruleset-main-protection` control of
+org-wide**. `fld-forge/.github` has CI but does not produce the complete set
+of six Python-profile contexts, so its checks-free override remains explicit.
+Requiring the missing contexts here would block every merge. The per-repo
+definitions (the six contexts `quality`, `uv-audit`, `secrets-scan`,
+`semgrep`, `zizmor`, `CodeQL`) live in the `ruleset-main-protection` control of
 [`fld-forge/governance`](https://github.com/fld-forge/governance)
 (`src/governance_tools/baseline.json`, ADR-0009), with a per-target override
 that keeps this repository's ruleset checks-free.
