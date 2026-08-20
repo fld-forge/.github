@@ -5,9 +5,9 @@ organization ever has to be rebuilt, re-apply them with the commands below.
 
 > Maintained by hand: organization state is not reachable from a test suite.
 > Every value below was verified with a `GET` immediately after it was written.
-> Last verified: 2026-08-18. (2026-08-20: repository control C1 is live on the
-> Python repositories; the separate organization `mature-discipline` ruleset
-> still differs from its versioned definition — see the Rulesets section.)
+> Last verified: 2026-08-20. Repository control C1 is live on all three
+> repositories; the separate organization `mature-discipline` ruleset still
+> differs from its versioned definition — see the Rulesets section.
 
 ## Actions: allowed actions and SHA pinning
 
@@ -217,12 +217,18 @@ live in the `ruleset-main-protection` control of
 (`src/governance_tools/baseline.json`, ADR-0009). Required checks remain
 **per repository, never org-wide**.
 
-As of the last live verification, `fld-forge/.github` still has its explicit
-checks-free override. Its approved desired state is strict status checks for
-exactly `CodeQL` and `validation`, the contexts this repository actually
-produces. Applying that state remains pending a governance baseline update and
-a separately reviewed live ruleset change; no Python-only context will be
-required here because that would block every merge.
+As of 2026-08-20, the `fld-forge/.github` repository ruleset
+`main-protection` (ID `20970461`) requires strict status checks for exactly
+`CodeQL` and `validation`, the contexts this repository actually produces. It
+has no bypass actors. The live `GET` returned
+`updated_at: 2026-08-20T03:28:24.113-04:00`; re-check the evidence with:
+
+```bash
+gh api repos/fld-forge/.github/rulesets/20970461 \
+  --jq '{id, enforcement, bypass_actors, rules}'
+```
+
+No Python-only context is required here because that would block every merge.
 
 This live C1 enforcement is independent of the organization
 `mature-discipline` ruleset. Its versioned definition pins
