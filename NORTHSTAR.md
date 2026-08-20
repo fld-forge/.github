@@ -9,7 +9,7 @@ invented. Updated whenever a measurement changes category.
 
 | KPI | Current | Target | Measurement |
 | --- | --- | --- | --- |
-| Validation CI duration | not yet measured | < 1 min | Duration of the `validation` job on the latest `main` run |
+| Validation CI duration | 5 s | < 1 min | `validation` job start-to-completion time on the latest successful `main` run |
 
 ## Security
 
@@ -17,15 +17,16 @@ invented. Updated whenever a measurement changes category.
 | --- | --- | --- | --- |
 | Rulesets active without bypass | 3 of 3 | 100% | The `validation` job fails unless every ruleset has `enforcement: active` and `bypass_actors: []` |
 
-Supporting indicator: OpenSSF Scorecard reporting is not yet measured; the
-target is a successful published scan every week, measured by the latest
-`OpenSSF Scorecard` workflow run and the public `api.scorecard.dev` badge.
+Supporting indicator: OpenSSF Scorecard is 6.5/10, published on 2026-08-20;
+the latest `main` scan passed. The target is a successful published scan every
+week, measured by the latest `OpenSSF Scorecard` workflow run and the public
+`api.scorecard.dev` result.
 
 ## Maintainability
 
 | KPI | Current | Target | Measurement |
 | --- | --- | --- | --- |
-| Age of the org-settings inventory | 1 day | < 90 days since last verification | The `Last verified` date at the top of `docs/org-settings.md` against today |
+| Age of the org-settings inventory | 0 days | < 90 days since last verification | The `Last verified` date at the top of `docs/org-settings.md` against the UTC calendar date |
 
 ## Scalability
 
