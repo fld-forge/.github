@@ -1,6 +1,7 @@
 # .github
 
 [![CI](https://img.shields.io/github/actions/workflow/status/fld-forge/.github/ci.yml?branch=main&logo=githubactions&logoColor=white&label=CI)](https://github.com/fld-forge/.github/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/fld-forge/.github/badge)](https://scorecard.dev/viewer/?uri=github.com/fld-forge/.github)
 
 The official settings repository for the **fld-forge** organization. It has two
 distinct roles.
