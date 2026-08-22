@@ -15,6 +15,11 @@ Do not open a public issue. Use GitHub's private reporting on the affected
 repository: **Security** tab -> **Report a vulnerability**. For this repository,
 [open a private vulnerability report directly](https://github.com/fld-forge/.github/security/advisories/new).
 
+These repositories are maintained by a single person in their own time, so no
+response time is guaranteed. Every report is read and taken seriously and
+answered as soon as possible; silence means the reply is still coming, not
+that the report was dismissed.
+
 ## Automated controls
 
 Every repository in the organization inherits an enforced security
