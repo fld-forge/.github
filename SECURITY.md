@@ -17,8 +17,7 @@ repository: **Security** tab -> **Report a vulnerability**. For this repository,
 
 These repositories are maintained by a single person in their own time, so no
 response time is guaranteed. Every report is read and taken seriously and
-answered as soon as possible; silence means the reply is still coming, not
-that the report was dismissed.
+answered as soon as possible; silence is a backlog, not a dismissal.
 
 ## Automated controls
 
