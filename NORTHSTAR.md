@@ -5,11 +5,16 @@ versioned governance policy for **fld-forge**). One North Star KPI per axis.
 Every value is measured; an unmeasured value is written as unmeasured, never
 invented. Updated whenever a measurement changes category.
 
+A `Current` value that a gate verifies on every run is written plain: it cannot
+drift without turning something red. A value read by hand carries the date it
+was read, because nothing keeps it current afterwards - the `Measurement`
+column is how to refresh it, and a dated reading stays true even once stale.
+
 ## Speed
 
 | KPI | Current | Target | Measurement |
 | --- | --- | --- | --- |
-| Validation CI duration | 5 s | < 1 min | `validation` job start-to-completion time on the latest successful `main` run |
+| Validation CI duration | 5 s, read 2026-08-22 | < 1 min | `validation` job start-to-completion time on the latest successful `main` run |
 
 ## Security
 
@@ -25,7 +30,7 @@ the public `api.scorecard.dev` result.
 
 | KPI | Current | Target | Measurement |
 | --- | --- | --- | --- |
-| Age of the org-settings inventory | 0 days | < 90 days since last verification | The `Last verified` date at the top of `docs/org-settings.md` against the UTC calendar date |
+| Age of the org-settings inventory | 0 days, read 2026-08-22 | < 90 days since last verification | The `Last verified` date at the top of `docs/org-settings.md` against the UTC calendar date |
 
 ## Scalability
 
