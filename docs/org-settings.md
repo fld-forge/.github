@@ -176,7 +176,6 @@ EOF
 
 ## Rulesets
 
-Three organization rulesets are live, all `active`, all with no bypass actors.
 The definitions live in [`rulesets/`](../rulesets/) together with the design
 rationale, the apply procedure and the ordering constraint on
 `required_signatures`.
