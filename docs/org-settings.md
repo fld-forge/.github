@@ -5,9 +5,9 @@ organization ever has to be rebuilt, re-apply them with the commands below.
 
 > Maintained by hand: organization state is not reachable from a test suite.
 > Every value below was verified with a `GET` immediately after it was written.
-> Last verified: 2026-08-20. Repository control C1 is live on all three
-> repositories; the separate organization `mature-discipline` ruleset still
-> differs from its versioned definition — see the Rulesets section.
+> Last verified: 2026-08-22. Repository control C1 is live on all three
+> repositories, and the organization `mature-discipline` ruleset now matches
+> its versioned definition — see the Rulesets section.
 
 ## Actions: allowed actions and SHA pinning
 
@@ -207,7 +207,7 @@ Organization and repository rules **aggregate**, most restrictive wins, so the
 repository-level rulesets that already exist on the transferred repositories
 stay in place and cannot weaken anything.
 
-### Live repository checks and separate organization drift
+### Live repository checks and the organization ruleset
 
 Repository control C1 is live on the Python repositories and requires exactly
 eight strict status contexts: `CodeQL`, `dependency-review`, `pip-audit`,
@@ -231,10 +231,18 @@ gh api repos/fld-forge/.github/rulesets/20970461 \
 No Python-only context is required here because that would block every merge.
 
 This live C1 enforcement is independent of the organization
-`mature-discipline` ruleset. Its versioned definition pins
-`allowed_merge_methods: ["squash"]` on the `pull_request` rule, but the live
-organization ruleset still differs from that definition. Resolving that
-organization drift remains outside the repository-level C1 scope.
+`mature-discipline` ruleset (ID `20969835`), whose versioned definition pins
+`allowed_merge_methods: ["squash"]` on the `pull_request` rule. The live
+ruleset matches that definition: a `GET` on 2026-08-22 returned
+`allowed_merge_methods: ["squash"]`, `enforcement: active` and no bypass
+actors, on a ruleset whose `updated_at` is `2026-08-20T20:01:33.103-04:00`.
+A full fleet audit the same day reported 42 of 42 repository cells and 12 of
+12 organization cells `OK`, with zero drift. Re-check the ruleset with:
+
+```bash
+gh api orgs/fld-forge/rulesets/20969835 \
+  --jq '{id, enforcement, bypass_actors, rules}'
+```
 
 ## Two-factor authentication
 
