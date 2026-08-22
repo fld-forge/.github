@@ -276,15 +276,24 @@ rather than remembering later.
 | `deploy_keys_enabled_for_repositories` | `false` | yes |
 | `members_can_delete_repositories` | `false` | **no, web UI only** |
 | `members_can_change_repo_visibility` | `false` | **no, web UI only** |
-| `members_can_invite_outside_collaborators` | `false` | **no, web UI only** |
+| `members_can_invite_outside_collaborators` | `true` | **no, Enterprise Cloud only** |
 
 Organization **owners are exempt** from `members_can_create_repositories`, so
 turning it off does not stop the owner from creating repositories. It applies
 to the `member` role only.
 
 The last three rows behave exactly like `two_factor_requirement_enabled`: the
-`PATCH` returns `HTTP 200 OK` and echoes the old value back. They are part of
-the same web-only group and are listed with 2FA in the manual checklist below.
+`PATCH` returns `HTTP 200 OK` and echoes the old value back. The first two are
+set in the web interface and are listed with 2FA in the manual checklist below.
+
+The `true` on the last row is a plan limit, not an oversight. GitHub exposes the
+restriction on outside-collaborator invitations only on Enterprise Cloud, so
+`true` is the only value this organization can hold while it is on Team. The
+`org-outside-collaborator-invitations` control of
+[`fld-forge/governance`](https://github.com/fld-forge/governance) encodes
+exactly that: it wants `false` and allows `true` while the plan is Free or Team,
+so the fleet audit records the gap instead of reporting a pass. Upgrading the
+plan is what makes `false` reachable.
 
 ```bash
 gh api orgs/fld-forge -X PATCH \
@@ -322,15 +331,15 @@ gh api orgs/fld-forge --jq '{web_commit_signoff_required}'
 ## Manual checklist: settings the API cannot write
 
 Four organization settings are read only over REST and silently ignore a
-`PATCH`. They must be set in the web interface, and an automated audit cannot
-fix them, only report them.
+`PATCH`. An automated audit cannot fix them, only report them. Three are set in
+the web interface; the fourth is not reachable on this plan at all.
 
 | Setting | Wanted | Where |
 | --- | --- | --- |
 | `two_factor_requirement_enabled` | `true` | Settings -> Authentication security |
 | `members_can_delete_repositories` | `false` | Settings -> Member privileges -> Repository deletion and transfer |
 | `members_can_change_repo_visibility` | `false` | Settings -> Member privileges -> Repository visibility change |
-| `members_can_invite_outside_collaborators` | `false` | Settings -> Member privileges -> Repository invitations |
+| `members_can_invite_outside_collaborators` | `true` (plan limit) | not on Team: Enterprise Cloud only |
 
 Re-read them after any web change, because this is the only way to know they
 landed:
