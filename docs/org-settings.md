@@ -4,10 +4,9 @@ Inventory of the **fld-forge** settings that are not versioned as files. If the
 organization ever has to be rebuilt, re-apply them with the commands below.
 
 > Maintained by hand: organization state is not reachable from a test suite.
-> Every value below was verified with a `GET` immediately after it was written.
-> Last verified: 2026-08-22. Repository control C1 is live on all three
-> repositories, and the organization `mature-discipline` ruleset now matches
-> its versioned definition — see the Rulesets section.
+> This file records the intended setting and the command that reads or writes
+> it; run the command rather than trusting a value copied here.
+> Last verified: 2026-08-22.
 
 ## Actions: allowed actions and SHA pinning
 
@@ -16,19 +15,11 @@ referenced by tag or branch is rejected, only a full 40 character commit SHA is
 accepted.
 
 Restricting `allowed_actions` to `selected` was considered and rejected. The
-repositories to be governed use fourteen distinct third party actions
-(`astral-sh/setup-uv`, `googleapis/release-please-action`,
-`ossf/scorecard-action`, `anchore/sbom-action`, `gitleaks/gitleaks-action`,
-`release-drafter/release-drafter`, `sigstore/cosign-installer`,
-`Swatinem/rust-cache`, `dtolnay/rust-toolchain`, `softprops/action-gh-release`,
-`taiki-e/install-action`, `extractions/setup-just`, `pnpm/setup`,
-`zizmorcore/zizmor-action`). Enumerating them would break workflows on transfer
-and would require an organization settings change for every new action, while
-protecting less than SHA pinning does: an allow-listed action referenced by a
-mutable tag is still vulnerable to that tag being repointed, which is the
-attack SHA pinning actually prevents. Every repository in the fleet is already
-100 percent SHA pinned, so the requirement is enforceable today without
-breaking anything.
+repositories to be governed use many distinct third party actions. Enumerating
+them would break workflows on transfer and would require an organization
+settings change for every new action, while protecting less than SHA pinning
+does: an allow-listed action referenced by a mutable tag is still vulnerable to
+that tag being repointed, which is the attack SHA pinning actually prevents.
 
 ```bash
 gh api orgs/fld-forge/actions/permissions -X PUT --input - <<'EOF'
@@ -85,7 +76,7 @@ gh api orgs/fld-forge/actions/permissions/artifact-and-log-retention
 gh api repos/fld-forge/<repo>/actions/permissions/artifact-and-log-retention
 ```
 
-## Security configuration: fld-forge-baseline (id 267493)
+## Security configuration: fld-forge-baseline
 
 Enforced (`enforcement: enforced`), and the default for **all** new
 repositories. Enforced means a repository administrator cannot turn off the
@@ -170,8 +161,6 @@ moment it exists, and that value is `sandbox` unless someone deliberately
 promotes the repository. `values_editable_by: org_actors` prevents a repository
 administrator from moving their own repository out of the strict tier.
 
-Current assignment: `.github`, `governance` and `pi-config` are all `mature`.
-
 ```bash
 # Read the schema and every assignment
 gh api orgs/fld-forge/properties/schema/tier
@@ -187,7 +176,6 @@ EOF
 
 ## Rulesets
 
-Three organization rulesets are live, all `active`, all with no bypass actors.
 The definitions live in [`rulesets/`](../rulesets/) together with the design
 rationale, the apply procedure and the ordering constraint on
 `required_signatures`.
@@ -209,44 +197,36 @@ stay in place and cannot weaken anything.
 
 ### Live repository checks and the organization ruleset
 
-Repository control C1 is live on the Python repositories and requires exactly
-eight strict status contexts: `CodeQL`, `dependency-review`, `pip-audit`,
-`quality`, `secrets-scan`, `semgrep`, `uv-audit`, and `zizmor`. The definitions
-live in the `ruleset-main-protection` control of
+Required status checks are governed **per repository, never org-wide**. The
+desired contexts of the repository control C1 live in the
+`ruleset-main-protection` control of
 [`fld-forge/governance`](https://github.com/fld-forge/governance)
-(`src/governance_tools/baseline.json`, ADR-0009). Required checks remain
-**per repository, never org-wide**.
+(`src/governance_tools/baseline.json`, ADR-0009), which is what the fleet
+audit compares the live rulesets against.
 
-As of 2026-08-20, the `fld-forge/.github` repository ruleset
-`main-protection` (ID `20970461`) requires strict status checks for exactly
-`CodeQL` and `validation`, the contexts this repository actually produces. It
-has no bypass actors. The live `GET` returned
-`updated_at: 2026-08-20T03:28:24.113-04:00`; re-check the evidence with:
+This repository requires only the contexts it actually produces. No
+Python-only context is required here, because that would block every merge.
+Read its live repository ruleset with:
 
 ```bash
-gh api repos/fld-forge/.github/rulesets/20970461 \
+gh api repos/fld-forge/.github/rulesets --jq '.[] | {id, name, enforcement}'
+gh api repos/fld-forge/.github/rulesets/<id> \
   --jq '{id, enforcement, bypass_actors, rules}'
 ```
 
-No Python-only context is required here because that would block every merge.
-
-This live C1 enforcement is independent of the organization
-`mature-discipline` ruleset (ID `20969835`), whose versioned definition pins
-`allowed_merge_methods: ["squash"]` on the `pull_request` rule. The live
-ruleset matches that definition: a `GET` on 2026-08-22 returned
-`allowed_merge_methods: ["squash"]`, `enforcement: active` and no bypass
-actors, on a ruleset whose `updated_at` is `2026-08-20T20:01:33.103-04:00`.
-A full fleet audit the same day reported 42 of 42 repository cells and 12 of
-12 organization cells `OK`, with zero drift. Re-check the ruleset with:
+A repository ruleset is independent of the organization `mature-discipline`
+ruleset, whose versioned definition pins `allowed_merge_methods: ["squash"]`
+on the `pull_request` rule. Read the live organization rulesets with:
 
 ```bash
-gh api orgs/fld-forge/rulesets/20969835 \
+gh api orgs/fld-forge/rulesets --jq '.[] | {id, name, enforcement}'
+gh api orgs/fld-forge/rulesets/<id> \
   --jq '{id, enforcement, bypass_actors, rules}'
 ```
 
 ## Two-factor authentication
 
-**Not enforced yet, and it cannot be enforced from the REST API.**
+**It cannot be enforced from the REST API.**
 
 `two_factor_requirement_enabled` is returned by `GET /orgs/fld-forge` but is
 **read only**: a `PATCH` that sets it returns `HTTP 200 OK` with the field
@@ -273,9 +253,6 @@ gh api 'orgs/fld-forge/members?filter=2fa_disabled' --jq '. | length'
 gh api 'orgs/fld-forge/members?filter=all' --jq '. | length'
 ```
 
-Verified 2026-08-18: `filter=all` returns 1, `filter=2fa_disabled` returns 0.
-The sole member already has 2FA, so enabling the requirement removes nobody.
-
 Note that `GET /user --jq .two_factor_authentication` is **not** a usable
 substitute: it returns `null` unless the token carries the `user` scope, and a
 `null` there says nothing about whether 2FA is on.
@@ -293,21 +270,30 @@ rather than remembering later.
 | `members_can_create_public_repositories` | `false` | yes (cascades from the line above) |
 | `members_can_create_private_repositories` | `false` | yes (cascades from the line above) |
 | `members_can_create_teams` | `false` | yes |
-| `default_repository_permission` | `read` | yes (already correct) |
-| `members_can_fork_private_repositories` | `false` | yes (already correct) |
-| `members_can_delete_issues` | `false` | yes (already correct) |
-| `deploy_keys_enabled_for_repositories` | `false` | yes (already correct) |
-| `members_can_delete_repositories` | `true` | **no, web UI only** |
-| `members_can_change_repo_visibility` | `true` | **no, web UI only** |
-| `members_can_invite_outside_collaborators` | `true` | **no, web UI only** |
+| `default_repository_permission` | `read` | yes |
+| `members_can_fork_private_repositories` | `false` | yes |
+| `members_can_delete_issues` | `false` | yes |
+| `deploy_keys_enabled_for_repositories` | `false` | yes |
+| `members_can_delete_repositories` | `false` | **no, web UI only** |
+| `members_can_change_repo_visibility` | `false` | **no, web UI only** |
+| `members_can_invite_outside_collaborators` | `true` | **no, Enterprise Cloud only** |
 
 Organization **owners are exempt** from `members_can_create_repositories`, so
 turning it off does not stop the owner from creating repositories. It applies
 to the `member` role only.
 
 The last three rows behave exactly like `two_factor_requirement_enabled`: the
-`PATCH` returns `HTTP 200 OK` and echoes the old value back. They are part of
-the same web-only group and are listed with 2FA in the manual checklist below.
+`PATCH` returns `HTTP 200 OK` and echoes the old value back. The first two are
+set in the web interface and are listed with 2FA in the manual checklist below.
+
+The `true` on the last row is a plan limit, not an oversight. GitHub exposes the
+restriction on outside-collaborator invitations only on Enterprise Cloud, so
+`true` is the only value this organization can hold while it is on Team. The
+`org-outside-collaborator-invitations` control of
+[`fld-forge/governance`](https://github.com/fld-forge/governance) encodes
+exactly that: it wants `false` and allows `true` while the plan is Free or Team,
+so the fleet audit records the gap instead of reporting a pass. Upgrading the
+plan is what makes `false` reachable.
 
 ```bash
 gh api orgs/fld-forge -X PATCH \
@@ -345,15 +331,15 @@ gh api orgs/fld-forge --jq '{web_commit_signoff_required}'
 ## Manual checklist: settings the API cannot write
 
 Four organization settings are read only over REST and silently ignore a
-`PATCH`. They must be set in the web interface, and an automated audit cannot
-fix them, only report them.
+`PATCH`. An automated audit cannot fix them, only report them. Three are set in
+the web interface; the fourth is not reachable on this plan at all.
 
-| Setting | Current | Wanted | Where |
-| --- | --- | --- | --- |
-| `two_factor_requirement_enabled` | `false` | `true` | Settings -> Authentication security |
-| `members_can_delete_repositories` | `true` | `false` | Settings -> Member privileges -> Repository deletion and transfer |
-| `members_can_change_repo_visibility` | `true` | `false` | Settings -> Member privileges -> Repository visibility change |
-| `members_can_invite_outside_collaborators` | `true` | `false` | Settings -> Member privileges -> Repository invitations |
+| Setting | Wanted | Where |
+| --- | --- | --- |
+| `two_factor_requirement_enabled` | `true` | Settings -> Authentication security |
+| `members_can_delete_repositories` | `false` | Settings -> Member privileges -> Repository deletion and transfer |
+| `members_can_change_repo_visibility` | `false` | Settings -> Member privileges -> Repository visibility change |
+| `members_can_invite_outside_collaborators` | `true` (plan limit) | not on Team: Enterprise Cloud only |
 
 Re-read them after any web change, because this is the only way to know they
 landed:
@@ -363,8 +349,3 @@ gh api orgs/fld-forge --jq '{two_factor_requirement_enabled,
   members_can_delete_repositories, members_can_change_repo_visibility,
   members_can_invite_outside_collaborators}'
 ```
-
-## Membership and billing
-
-Plan `team`, one seat, single owner. Agents operate with the owner's token and
-are not organization members, so no additional seat is billed.
