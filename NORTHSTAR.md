@@ -14,7 +14,14 @@ column is how to refresh it, and a dated reading stays true even once stale.
 
 | KPI | Current | Target | Measurement |
 | --- | --- | --- | --- |
-| Validation CI duration | 5 s, read 2026-08-22 | < 1 min | `validation` job start-to-completion time on the latest successful `main` run |
+| Validation CI duration | 5 s, median of the last 11 successful `main` runs, read 2026-08-22 | < 1 min | `validation` job start-to-completion time, taken as a median over the recent successful `main` runs - 3 to 6 s observed across 11 |
+
+This repository holds policy, profile and documentation, not code, so it has no
+test suite: the fleet's `Median cost per test` and `Test suite duration`
+indicators have nothing to divide here and are deliberately absent rather than
+forced. What does carry over is the discipline they were changed for - a single
+reading of a noisy figure is not a measurement, so the reading above is a median
+and says how many runs it spans.
 
 ## Security
 
