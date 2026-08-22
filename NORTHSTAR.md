@@ -17,10 +17,9 @@ invented. Updated whenever a measurement changes category.
 | --- | --- | --- | --- |
 | Rulesets active without bypass | 3 of 3 | 100% | The `validation` job fails unless every ruleset has `enforcement: active` and `bypass_actors: []` |
 
-Supporting indicator: OpenSSF Scorecard is 6.5/10, published on 2026-08-20;
-the latest `main` scan passed. The target is a successful published scan every
-week, measured by the latest `OpenSSF Scorecard` workflow run and the public
-`api.scorecard.dev` result.
+Supporting indicator: OpenSSF Scorecard. The target is a successful published
+scan every week, measured by the latest `OpenSSF Scorecard` workflow run and
+the public `api.scorecard.dev` result.
 
 ## Maintainability
 

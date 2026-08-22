@@ -15,8 +15,6 @@ Do not open a public issue. Use GitHub's private reporting on the affected
 repository: **Security** tab -> **Report a vulnerability**. For this repository,
 [open a private vulnerability report directly](https://github.com/fld-forge/.github/security/advisories/new).
 
-You will receive an initial response within 7 business days.
-
 ## Automated controls
 
 Every repository in the organization inherits an enforced security
